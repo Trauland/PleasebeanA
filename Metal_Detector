@@ -1,0 +1,16 @@
+`timescale 1ns / 1ps
+
+
+module MetalDetector
+(
+    input clk, MD0, MD1, MD2, MD3,
+    output MDLED0, MDLED1, MDLED2, MDLED3
+ );
+    
+    
+ 
+ 
+ 
+ 
+ 
+endmodule
