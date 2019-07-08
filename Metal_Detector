@@ -1,38 +1,42 @@
 module MetalDetector
     (
-            input CLK,      //The clock on the board
-            input MD1, MD2, MD3, MD4,           // Metal Detectors 1-4. Set as pins JA(0)-JA(3)
-            output MDLED1, MDLED2, MDLED3, MDLED4                       // LED on Basys board used to tell if any of the sensors are tripped
-//            output reg [1:0] MagnetStart,     // Register to pass to the Magnet 
-//            output reg [1:0] RoverStop       // Register to pass to the Rover to stop the car if a washer is found
+            input clk,      //The clock on the board
+            input MD0, MD1, MD2, MD3,           // Metal Detectors 1-4. Set as pins JA(0)-JA(3)
+            output MDLED0, MDLED1, MDLED2, MDLED3,                       // LED on Basys board used to tell if any of the sensors are tripped
+            output reg [1:0] MagnetStart,     // Register to pass to the Magnet 
+            output reg [1:0] RoverStop       // Register to pass to the Rover to stop the car if a washer is found
     );
     
-            reg BMD1, BMD2 ,BMD3, BMD4;
-        
+            reg BMD0, BMD1 ,BMD2, BMD3;
+            reg [1:0] check;
+            reg oroutput;
+            
+                    assign MDLED0 = ~MD0;
                     assign MDLED1 = ~MD1;
                     assign MDLED2 = ~MD2;
                     assign MDLED3 = ~MD3;
-                    assign MDLED4 = ~MD4;
                     
-//            always @ (CLK)
-//                begin
-//                        BMD1 <= MD1;
-//                        BMD2 <= MD2;
-//                        BMD3 <= MD3;
-//                        BMD4 <= MD4;
-                        
-//                        if ( BMD1 || BMD2 || BMD3 || BMD4)
-//                            begin
-//                                RoverStop <= 0;
-//                                MagnetStart <= 1;
-//                            end    
-//                        else
-//                            begin
-//                                RoverStop <= 1;
-//                                MagnetStart <=0;
-//                            end
-//                end        
-           
-
+            always @ (posedge clk)
+                begin
+                            BMD0 <= MD0;            // Buffering all the inputs
+                            BMD1 <= MD1;
+                            BMD2 <= MD2;
+                            BMD3 <= MD3;
+                            
+                           assign oroutput = BMD0|BMD1|BMD2|BMD3;
+                           
+                     if (oroutput)
+                        begin
+                            MagnetStart <= 1;
+                            RoverStop <= 1;
+                        end
+                   
+                     else
+                        begin
+                            MagnetStart <= 0;
+                            RoverStop <= 0;
+                        end
+                                                       
+                end          
                         
 endmodule
