@@ -1,0 +1,42 @@
+`timescale 1ns / 1ps
+
+
+module MDsim();
+    reg clk;        //inputs as reg, outputs as wires
+    reg MD0;
+    reg MD1;
+    reg MD2;
+    reg MD3;
+    wire MDLED0, MDLED1, MDLED2, MDLED3;
+    wire sensors;
+
+    
+    initial begin
+    MD0 <= 1;       // simulating what the values would be if Sensor0 finds a washer
+    MD1 <= 1;
+    MD2 <= 1;
+    MD3 <= 1;
+    clk <= 0;
+    
+end    
+   always  #5 clk = !clk;  // need the clock in order to buffer my inputs
+    
+    
+    MetalDetector UUT
+    (
+    .clk(clk),
+    .MD0(MD0),
+    .MD1(MD1),
+    .MD2(MD2),
+    .MD3(MD3),
+    .MDLED0(MDLED0),
+    .MDLED1(MDLED1),
+    .MDLED2(MDLED2),
+    .MDLED3(MDLED3),
+    .sensors(sensors)
+
+    );
+    
+
+    
+endmodule
