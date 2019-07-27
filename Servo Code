@@ -1,24 +1,23 @@
 `timescale 1ns / 1ps
 
-
-module servo
+module Servo
     (
+        input servostart, // tells the servo to sweep
         input clk,
-        input MagnetStart,
+       // input MagnetStart,
         output reg servopin= 0,
-        output reg magdone = 0
+        output reg servodone = 0 // Lets the state machine know the servo arm has completed the sweep
       
     );
     
+      
         
     parameter center = 0,   // this is where the routine should start, in the center
               left = 1,   // case for moving to the left
               right = 2,  //case for moving to the right
               rtc = 3, //return to center: basically the done case
-              goleft = 27'd100_000_000, // Amount of ticks I want the servo to run for, @ 100MHz this is 1 sec
-              goright = 28'd200_000_000,
-              donegc = 29'd300_000_000,
-              stay = 29'd400_000_000;
+              loop = 29'd75_000_000; // Amount of ticks I want the servo to run for, @ 100MHz this is 1 sec
+
               
               
     
@@ -35,81 +34,59 @@ module servo
           if (pulsecount == 2_000_000)            
                  pulsecount <= 0;
           else
-                pulsecount <= pulsecount +1;
+                pulsecount <= pulsecount +1;               
+          
+          if (keepgoing == loop)
+             begin
+                keepgoing <=0;
+                state <= state+1;
+             end
+           else
+                      keepgoing <= keepgoing +1;      // this counter will keep moving to the center until "keepgoing" reaches 1
+                      
                 
-          keepgoing <= keepgoing +1;      // this counter will keep moving to the center until "keepgoing" reaches 1 sec
    
         end
         
    
-   
-   // if (MagnetStart==1)     // controls whether this routine runs based on if a washer is found
-     //   begin
-            always @(posedge clk)
+    always @(posedge clk)
+         begin
+             if (servostart == 1)     // controls whether this routine runs based on if a washer is found         
                 begin
-                    
+             
                     case(state)
                     
                          center:
                              begin
-                                servopin <= (pulsecount < 150_001)? 1:0; 
-                                
-                                if (keepgoing == goleft) // Once keepgoing has counted for 1 sec, the state will change
-                                    begin                   // meaning the servo will change directions
-                                        state = left;
-                                        keepgoing <= 0;
-                                     end
-                                else
-                                    state = center;     //if keepgoing hasn't reached 1 sec, the servo keeps its position at the center
-                                    
+                                servopin <= (pulsecount < 150_000)? 1:0; 
                               end
                             
                             left: 
                                 begin
-                                    servopin <= (pulsecount < 100_001)?1:0;  
-                                   // keepgoing <= keepgoing +1;      // this counter will keep turning left for 1 sec                      
-                                    
-                                    if (keepgoing == goright)     // if keepgoing reaches 1sec then the servo changes states, moves to the right
-                                        begin
-                                            state = right;
-                                            keepgoing <= 0;
-                                        end
-                                    else
-                                        state = left;        //if keepgoing hasn't reached 1sec then keep turning left
+                                    servopin <= (pulsecount < 50_000)?1:0;  
                                  end
                                 
                             right:
                                 begin
-                                    servopin <= (pulsecount < 200_001)? 1:0;
-                                 //   keepgoing <= keepgoing +1;      // this counter will keep turning right until keepgoing reaches 1 sec
-                                
-                                    if (keepgoing == donegc)      //   if keepgoing reaches 1 sec change the state to move back to the center
-                                        begin
-                                            state = rtc;
-                                            keepgoing <= 0;
-                                        end
-                                        
-                                     else
-                                        state = right;          // if keepgoing hasn't reached 1 sec keep turning right
+                                    servopin <= (pulsecount < 250_000)? 1:0;
                                 end
-                                
                                 
                            rtc:
                                 begin
-                                    servopin <= (pulsecount < 150_001)?1:0;   // go to center until keepgoing reaches 1 sec
-                                    keepgoing = keepgoing +1;
+                                    servopin <= (pulsecount < 150_000)?1:0;   // go to center until keepgoing reaches 1 sec
                                     
-                                    if (keepgoing == stay)
-                                        begin                       // Once the servo is at the center I want to change a control bit that tells the 
-                                            state = center;         // other programs the magnet has swept, and I don't want to restart the sweep
-                                            keepgoing <= 0;
-                                           // MagnetStart = 0;
-                                            magdone <= 1;
-                                         end
-                                     else                       // if keepgoing isn't 1 sec, keep going to center
-                                        state = rtc;  
                                  end
+                                 
+                                 
                     endcase
-               end   // end of always @ posedge
-      //     end  // end of MagnetStart==1   
+                    
+                    
+                   if ((state ==3) && (keepgoing == loop))
+                        servodone <=1;
+                   else
+                        servodone <= 0;
+                    
+               end   // end of MagnetStart==1  
+           end   // end of always @ posedge
+      
 endmodule
