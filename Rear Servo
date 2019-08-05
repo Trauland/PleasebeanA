@@ -1,0 +1,87 @@
+`timescale 1ns / 1ps
+
+module Servo
+    (
+        input keepwasher, // tells the servo to sweep
+        input clk,
+       // input MagnetStart,
+        output reg rearservo= 0
+       // output reg servodone // Lets the state machine know the servo arm has completed the sweep
+      
+    );
+    
+//    initial begin
+//        servodone = 0;
+//    end
+      
+        
+    parameter forward = 0,   // this is where the routine should start, in the center
+              back = 1,   // case for moving to the left
+              btf = 2,
+              loop = 29'd75_000_000; // Amount of ticks I want the servo to run for, @ 100MHz this is 1 sec
+
+              
+              
+    
+    
+    reg [2:0] state = forward; // I want the routine to start with the servo in the center position
+    reg [20:0] pulsecount =0;     // this reg will contain the counter for the PWM
+    reg [27:0] keepgoing = 0;  // This is how long I want the PWM to output to the pin
+    
+  
+  
+    always @(posedge clk)           // This will increment the counter for the PWM synchronous with the clock
+        begin
+                 
+          if (pulsecount == 2_000_000)            
+                 pulsecount <= 0;
+          else
+                pulsecount <= pulsecount +1;               
+          
+          if (keepgoing == loop)
+             begin
+                keepgoing <=0;
+                state <= state+1;
+             end
+           else
+                      keepgoing <= keepgoing +1;      // this counter will keep moving to the center until "keepgoing" reaches 1
+                      
+                
+   
+        end
+        
+   
+    always @(posedge clk)
+         begin
+           //  if (servostart == 1)     // controls whether this routine runs based on if a washer is found         
+            //    begin
+             
+                    case(state)
+                    
+                         forward:
+                             begin
+                                rearservo <= (pulsecount < 50_000)? 1:0; 
+                              end
+                            
+                            back: 
+                                begin
+                                    rearservo <= (pulsecount < 150_000)?1:0;  
+                                 end
+                            
+                            btf:
+                             begin
+                                rearservo <= (pulsecount < 50_000)? 1:0; 
+                              end     
+                              
+                    endcase
+                    
+                    
+//                   if ((state == rtc) && (keepgoing == loop))
+//                        servodone <=1;
+//                   else
+//                        servodone <= 0;
+                    
+            //   end   // end of MagnetStart==1  
+          end   // end of always @ posedge
+      
+endmodule
